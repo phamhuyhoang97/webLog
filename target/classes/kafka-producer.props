@@ -1,0 +1,5 @@
+topic=rest_test2
+bootstrap.servers=localhost:9092
+schema.registry.url=http://localhost:9090/api/v1
+security.protocol=PLAINTEXT
+ignoreInvalidMessages=true

@@ -1,0 +1,131 @@
+-----------------------------------------------------
+Some options:
+
+# Create a topic
+
+bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test
+
+# Send messeage
+bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test
+(after that, type to send messages)
+
+# Start consumer
+
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
+
+
+# List all topics
+
+./bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+# Delete topic
+
+./bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic demo
+
+# See information about topic
+
+./bin/kafka-topics.sh --describe --topic demo --zookeeper localhost:2181
+
+# Start the Avro console producer to import a few records to Kafka:
+
+./bin/kafka-avro-console-producer --broker-list localhost:9092 --topic test_hdfs --property value.schema='{"type":"record","name":"myrecord","fields":[{"name":"f1","type":"string"}]}'
+
+type in:
+	{"f1": "value1"}
+	{"f1": "value2"}
+
+# Load conf(config file quickstart-hdfs.properties)
+
+confluent load hdfs-sink -d etc/kafka-connect-hdfs/quickstart-hdfs.properties
+
+----------------------------------------------
+HDFS
+
+# Change to hduser:
+
+# Copy file from HDFS to local
+
+hadoop fs -copyToLocal /topics/rest_test/partition=0/rest_test+0+0000000000+0000000999.avro /home/hduser/
+
+# List file in hdfs
+
+hadoop fs -ls /topics/test_hdfs/partitions=0
+
+# Show data:
+
+java -jar avro-tools-1.8.2.jar tojson rest_test+0+0000000010+0000000012.avro
+
+python src/main/resources/register_schema.py http://localhost:8081 persons-avro src/main/resources/person.avsc
+
+---------------------------------------------
+Schema Registry
+
+# Register a new version of a schema under the subject "Kafka-key"
+$ curl -X POST -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"schema": "{\"type\": \"string\"}"}' \
+    http://localhost:8081/subjects/Kafka-key/versions
+
+# Register a new version of a schema under the subject "Kafka-value"
+$ curl -X POST -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"schema": "{\"type\": \"string\"}"}' \
+     http://localhost:8081/subjects/Kafka-value/versions
+
+# List all subjects
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/subjects
+
+# List all schema versions registered under the subject "Kafka-value"
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/subjects/Kafka-value/versions
+
+# Fetch a schema by globally unique id 1
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/schemas/ids/1
+
+# Fetch version 1 of the schema registered under subject "Kafka-value"
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/subjects/Kafka-value/versions/1
+
+# Fetch the most recently registered schema under subject "Kafka-value"
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/subjects/Kafka-value/versions/latest
+
+# Check whether a schema has been registered under subject "Kafka-key"
+$ curl -X POST -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"schema": "{\"type\": \"string\"}"}' \
+    http://localhost:8081/subjects/Kafka-key
+
+# Test compatibility of a schema with the latest schema under subject "Kafka-value"
+$ curl -X POST -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"schema": "{\"type\": \"string\"}"}' \
+    http://localhost:8081/compatibility/subjects/Kafka-value/versions/latest
+
+# Get top level config
+$ curl -X GET -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    http://localhost:8081/config
+
+# Update compatibility requirements globally
+$ curl -X PUT -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"compatibility": "NONE"}' \
+    http://localhost:8081/config
+
+# Update compatibility requirements under the subject "Kafka-value"
+$ curl -X PUT -i -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+    --data '{"compatibility": "BACKWARD"}' \
+    http://localhost:8081/config
+
+# Deletes all schema versions registered under the subject "Kafka-value"
+$ curl -X DELETE http://localhost:8081/subjects/Kafka-value
+
+# Deletes version 1 of the schema registered under subject "Kafka-value"
+$ curl -X DELETE http://localhost:8081/subjects/Kafka-value/versions/1
+
+# Deletes the most recently registered schema under subject "Kafka-value"
+$ curl -X DELETE http://localhost:8081/subjects/Kafka-value/versions/latest
+
+------------------------------------------------------
+# Update config file
+
+curl -X POST --header "Content-Type: application/json" --data "[{'name': 'b', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'c', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}]" "localhost:19090/abc/config"
+
+curl -X PUT --header "Content-Type: application/json" --data "[{'name': 'a1', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a2', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a3', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a4', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a5', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a6', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'string'}, {'name': 'a7', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a8', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a9', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a10', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a11', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a12', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a13', 'type': 'Integer', 'sformat': '\\\d*', 'optional': 'nullable', 'desc': 'number'}, {'name': 'a14', 'type': 'DateTime', 'sformat': '(\\\d{4})-(\\\d{2})-(\\\d{2})', 'optional': 'required', 'desc': 'date time'}, {'name': 'a15', 'type': 'DateTime', 'sformat': '(\\\d{4})-(\\\d{2})-(\\\d{2})', 'optional': 'required', 'desc': 'date time'}, {'name': 'a16', 'type': 'DateTime', 'sformat': '(\\\d{4})-(\\\d{2})-(\\\d{2})', 'optional': 'required', 'desc': 'date time'}, {'name': 'a17', 'type': 'DateTime', 'sformat': '(\\\d{4})-(\\\d{2})-(\\\d{2})', 'optional': 'required', 'desc': 'date time'}, {'name': 'a18', 'type': 'DateTime', 'sformat': '(\\\d{4})-(\\\d{2})-(\\\d{2})', 'optional': 'required', 'desc': 'date time'}, {'name': 'a19', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'String'}, {'name': 'a20', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'String'}, {'name': 'a21', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'String'}, {'name': 'a22', 'type': 'String', 'sformat': '\\\w*', 'optional': 'required', 'desc': 'String'}]" "localhost:19090/abc/config"
